@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Android Notification Payload Visualizer</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__copy">
+          <p class="eyebrow">Notification Content Studio</p>
+          <h1>Preview notification content live.</h1>
+          <p class="hero__lede">
+            The payload structure stays fixed in the background so you can focus on content while keeping the same Android tray and MoEngage inbox look.
+          </p>
+        </div>
+        <div class="hero__actions">
+          <button class="button button--ghost" id="copy-json-btn" type="button">Copy JSON</button>
+          <button class="button" id="download-json-btn" type="button">Download Payload</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="controls-pane">
+          <form class="panel form-panel" id="payload-form">
+            <div class="panel__header">
+              <div>
+                <p class="panel__eyebrow">Content Only</p>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h3>Notification Content</h3>
+              <div class="field-grid field-grid--single">
+                <div class="field field--full">
+                  <span>Delivery Target</span>
+                  <div class="image-source-toggle" id="delivery-toggle">
+                    <label class="image-source-toggle__option is-active" id="delivery-tray-option">
+                      <input id="delivery-tray" type="radio" name="delivery-mode" value="tray" checked>
+                      <span>Tray Only</span>
+                    </label>
+                    <label class="image-source-toggle__option" id="delivery-inbox-option">
+                      <input id="delivery-inbox" type="radio" name="delivery-mode" value="inbox">
+                      <span>Tray + Inbox</span>
+                    </label>
+                  </div>
+                </div>
+                <label class="field field--full">
+                  <span>Campaign Name</span>
+                  <input id="content-campaign-name" type="text" minlength="5" placeholder="driver_trip_reminder">
+                </label>
+                <label class="field field--full">
+                  <span>Title</span>
+                  <input id="content-title" type="text">
+                </label>
+                <label class="field field--full">
+                  <span>Message</span>
+                  <textarea id="content-message" rows="7"></textarea>
+                </label>
+                <label class="field field--full">
+                  <span>Group Key</span>
+                  <input id="content-group-key" type="text" placeholder="General">
+                </label>
+                <label class="field field--full">
+                  <span>Primary CTA</span>
+                  <input id="content-cta-primary" type="text">
+                </label>
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Primary Action</span>
+                    <select id="content-cta-primary-type">
+                      <option value="deep_link">Deep Link</option>
+                      <option value="web_link">Web Link</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Primary Link</span>
+                    <input id="content-cta-primary-link" type="text">
+                  </label>
+                </div>
+                <label class="field field--checkbox field--full">
+                  <input id="include-second-cta" type="checkbox">
+                  <span>Add second CTA</span>
+                </label>
+                <div class="field-grid is-hidden" id="secondary-cta-fields">
+                  <label class="field field--full">
+                    <span>Secondary CTA</span>
+                    <input id="content-cta-secondary" type="text">
+                  </label>
+                  <label class="field">
+                    <span>Secondary Action</span>
+                    <select id="content-cta-secondary-type">
+                      <option value="deep_link">Deep Link</option>
+                      <option value="web_link">Web Link</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Secondary Link</span>
+                    <input id="content-cta-secondary-link" type="text">
+                  </label>
+                </div>
+                <label class="field field--checkbox field--full">
+                  <input id="include-image" type="checkbox">
+                  <span>Show image in inbox</span>
+                </label>
+                <div class="field-grid is-hidden" id="image-upload-field">
+                  <div class="image-source-toggle field--full" id="image-source-toggle">
+                    <label class="image-source-toggle__option is-active" id="image-source-url-option">
+                      <input id="image-source-url" type="radio" name="image-source-mode" value="url" checked>
+                      <span>Image URL</span>
+                    </label>
+                    <label class="image-source-toggle__option" id="image-source-file-option">
+                      <input id="image-source-file" type="radio" name="image-source-mode" value="file">
+                      <span>Attach Image</span>
+                    </label>
+                  </div>
+                  <label class="field field--full" id="image-url-field">
+                    <span>Image URL</span>
+                    <input id="content-image-url" type="url" placeholder="https://example.com/banner.jpg">
+                  </label>
+                  <label class="field field--full is-hidden" id="image-file-field">
+                    <span>Attach Image</span>
+                    <input id="content-image" type="file" accept="image/*">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <p class="visually-hidden" id="payload-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="preview-pane">
+          <div class="panel panel--compact">
+            <div class="panel__header">
+              <div>
+                <p class="panel__eyebrow">Live Visuals</p>
+                <h2>Android device previews</h2>
+              </div>
+            </div>
+            <div class="view-toggle" role="tablist" aria-label="Preview type">
+              <button class="view-toggle__button is-active" id="show-tray-btn" data-view="tray" type="button">Notification Tray</button>
+              <button class="view-toggle__button" id="show-inbox-btn" data-view="inbox" type="button">Inbox</button>
+            </div>
+            <p class="preview-pane__copy">
+              The phone is scrollable, so long copy behaves more like a real notification shade and inbox feed.
+            </p>
+          </div>
+
+          <div class="phone-grid">
+            <article class="device device--tray">
+              <div class="device__screen">
+                <div class="device__statusbar">
+                  <div class="statusbar__left">
+                    <span id="tray-status-time">2:25</span>
+                    <span id="tray-status-date">Sat, Apr 25</span>
+                  </div>
+                  <div class="statusbar__right">
+                    <span class="status-icon status-icon--signal"></span>
+                    <span class="status-icon status-icon--battery">
+                      <span>100</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="quick-settings">
+                  <div class="toggle-card">
+                    <div class="toggle-card__icon toggle-card__icon--wifi"></div>
+                    <div>
+                      <p>Wi-Fi</p>
+                      <span>Porter-HQ</span>
+                    </div>
+                  </div>
+                  <div class="toggle-card">
+                    <div class="toggle-card__icon toggle-card__icon--bluetooth"></div>
+                    <div>
+                      <p>Bluetooth</p>
+                      <span>Ready</span>
+                    </div>
+                  </div>
+                  <div class="toggle-card">
+                    <div class="toggle-card__icon toggle-card__icon--flashlight"></div>
+                    <div>
+                      <p>Flashlight</p>
+                      <span>Off</span>
+                    </div>
+                  </div>
+                  <div class="toggle-card">
+                    <div class="toggle-card__icon toggle-card__icon--modes"></div>
+                    <div>
+                      <p>Modes</p>
+                      <span>Standard</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="notification-group">
+                  <div class="notification-group__summary">
+                    <div class="app-badge" id="tray-app-icon">
+                      <img id="tray-app-icon-image" src="./assets/porter-app-icon.png" alt="Porter app icon">
+                    </div>
+                    <div class="notification-group__meta">
+                      <p id="tray-sender-name">Porter Partner</p>
+                      <span id="tray-received-ago">now</span>
+                    </div>
+                    <div class="notification-pill">^</div>
+                  </div>
+
+                  <div class="notification-card" id="notification-card">
+                    <div class="notification-card__body">
+                      <div class="notification-card__icon">
+                        <img id="tray-card-icon-image" src="./assets/porter-app-icon.png" alt="Porter app icon">
+                      </div>
+                      <div class="notification-card__text">
+                        <h3 id="tray-title-preview">Maximize Your Earnings Today</h3>
+                        <p id="tray-message-preview">
+                          Complete more trips with Porter and boost your daily income. Check your trip opportunities now.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="shade-actions">
+                  <button type="button">History</button>
+                  <button class="shade-actions__primary" type="button">Clear all</button>
+                  <button type="button">Alerts</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="device device--inbox">
+              <div class="device__screen">
+                <div class="inbox-header">
+                  <div class="inbox-header__status">
+                    <span id="inbox-status-time">2:25</span>
+                    <div class="statusbar__right statusbar__right--dark">
+                      <span class="status-icon status-icon--signal-dark"></span>
+                      <span class="status-icon status-icon--battery-dark">
+                        <span>100</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="inbox-titlebar">
+                    <button class="inbox-titlebar__back" type="button" aria-label="Back">
+                      <span class="inbox-titlebar__back-icon" aria-hidden="true"></span>
+                    </button>
+                    <h2>Notification</h2>
+                  </div>
+                  <div class="inbox-tabs">
+                    <button class="tab is-active" type="button">All</button>
+                    <button class="tab" type="button" id="section-tab">General</button>
+                    <button class="tab" type="button">Promotional</button>
+                  </div>
+                </div>
+
+                <div class="inbox-feed">
+                  <section class="feed-section">
+                    <div class="feed-section__meta">
+                      <span class="feed-section__plain-label" id="inbox-group-label">General</span>
+                      <span id="inbox-card-time">2:23 PM</span>
+                    </div>
+                    <article class="inbox-card">
+                      <div class="inbox-card__media is-empty" id="inbox-card-media">
+                        <img id="inbox-image-preview" alt="Inbox creative preview">
+                        <div class="inbox-card__media-empty" id="inbox-image-empty">
+                          Attach an image to preview a promotional inbox card.
+                        </div>
+                      </div>
+                      <div class="inbox-card__body">
+                        <h3 id="inbox-title-preview">Maximize Your Earnings Today</h3>
+                        <p id="inbox-message-preview">
+                          Complete more trips with Porter and boost your daily income. Check your trip opportunities now.
+                        </p>
+                        <div class="inbox-card__actions inbox-card__actions--single" id="inbox-cta-actions">
+                          <button class="inbox-card__cta inbox-card__cta--primary" id="inbox-cta-primary-preview" type="button">Open campaign</button>
+                          <button class="inbox-card__cta inbox-card__cta--secondary is-hidden" id="inbox-cta-secondary-preview" type="button">Maybe later</button>
+                        </div>
+                      </div>
+                    </article>
+                  </section>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
