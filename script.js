@@ -38,7 +38,7 @@ const state = {
   imageSourceMode: "url",
   imageUrl: "",
   imageObjectUrl: "",
-  groupKey: DEFAULT_STATE.preview.sectionLabel,
+  groupKey: "",
   expiry: "",
   preview: deepClone(DEFAULT_STATE.preview),
   payload: deepClone(DEFAULT_STATE.payload)
@@ -540,7 +540,7 @@ function syncPreviewClock() {
 
 function getGroupKeyLabel() {
   const rawValue = state.groupKey;
-  return typeof rawValue === "string" && rawValue.trim() ? rawValue.trim() : "General";
+  return typeof rawValue === "string" ? rawValue.trim() : "";
 }
 
 function prepareExportPayload() {
@@ -642,6 +642,10 @@ function serializeCtaButton(button) {
 function getExportValidationError() {
   if (state.isInboxNotif === null) {
     return "Please select a delivery target.";
+  }
+
+  if (!getGroupKeyLabel()) {
+    return "Please select a group key category.";
   }
 
   if (getCampaignName().length < 5) {
