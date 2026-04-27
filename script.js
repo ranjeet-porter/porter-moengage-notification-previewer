@@ -184,6 +184,11 @@ function bindContentInputs() {
 }
 
 function bindUtilityButtons() {
+  document.getElementById("error-dialog-close").addEventListener("click", closeErrorDialog);
+  document.getElementById("error-overlay").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeErrorDialog();
+  });
+
   document.getElementById("copy-json-btn").addEventListener("click", async () => {
     const exportPayload = prepareExportPayload();
     if (!exportPayload) {
@@ -331,12 +336,26 @@ function showCopySuccess() {
 }
 
 function showStatus(message, isError = false) {
-  const status = document.getElementById("payload-status");
-  if (!status) {
+  if (isError && message) {
+    showErrorDialog(message);
     return;
   }
+  const status = document.getElementById("payload-status");
+  if (!status) return;
   status.textContent = message;
-  status.classList.toggle("is-error", isError);
+}
+
+function showErrorDialog(message) {
+  const overlay = document.getElementById("error-overlay");
+  const msg = document.getElementById("error-dialog-msg");
+  if (!overlay || !msg) return;
+  msg.textContent = message;
+  overlay.classList.remove("is-hidden");
+}
+
+function closeErrorDialog() {
+  const overlay = document.getElementById("error-overlay");
+  if (overlay) overlay.classList.add("is-hidden");
 }
 
 function setText(id, value) {

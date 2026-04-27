@@ -331,6 +331,65 @@ body::before {
   letter-spacing: 0.03em;
 }
 
+.error-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.error-overlay.is-hidden {
+  display: none;
+}
+
+.error-dialog {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  max-width: 380px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+}
+
+.error-dialog__icon {
+  font-size: 2rem;
+  color: #e53e3e;
+}
+
+.error-dialog__msg {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a202c;
+  line-height: 1.5;
+}
+
+.error-dialog__close {
+  padding: 12px 32px;
+  border-radius: 999px;
+  background: #e53e3e;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  transition: opacity 140ms ease;
+}
+
+.error-dialog__close:hover {
+  opacity: 0.88;
+}
+
 .copy-toast {
   position: fixed;
   top: 24px;
