@@ -445,6 +445,10 @@ body::before {
   grid-template-columns: 1fr;
 }
 
+.field-grid--full-span {
+  grid-column: 1 / -1;
+}
+
 .image-source-toggle {
   display: inline-flex;
   gap: 8px;
