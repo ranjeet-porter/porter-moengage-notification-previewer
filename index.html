@@ -47,14 +47,20 @@
               <div class="field-grid field-grid--single">
                 <div class="field field--full">
                   <span>Delivery Target <span class="field__required">* required</span></span>
-                  <div class="image-source-toggle" id="delivery-toggle">
-                    <label class="image-source-toggle__option" id="delivery-tray-option">
-                      <input id="delivery-tray" type="radio" name="delivery-mode" value="tray">
-                      <span>Tray Only</span>
+                  <div class="delivery-options">
+                    <label class="delivery-option" id="delivery-tray-option">
+                      <div class="delivery-option__header">
+                        <input id="delivery-tray" type="radio" name="delivery-mode" value="tray">
+                        <span class="delivery-option__title">Tray Only</span>
+                      </div>
+                      <p class="delivery-option__desc">Notification appears only in the device notification tray. Disappears once dismissed.</p>
                     </label>
-                    <label class="image-source-toggle__option" id="delivery-inbox-option">
-                      <input id="delivery-inbox" type="radio" name="delivery-mode" value="inbox">
-                      <span>Tray + Inbox</span>
+                    <label class="delivery-option" id="delivery-inbox-option">
+                      <div class="delivery-option__header">
+                        <input id="delivery-inbox" type="radio" name="delivery-mode" value="inbox">
+                        <span class="delivery-option__title">Tray + Inbox</span>
+                      </div>
+                      <p class="delivery-option__desc">Notification appears in the tray and is also saved in the MoEngage inbox, so users can read it later.</p>
                     </label>
                   </div>
                 </div>
