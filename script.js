@@ -1,3 +1,6 @@
+const DEFAULT_NAVIGATION_TARGET =
+  "com.theporter.android.driverapp.ui.notification_center.SelfHandledNotificationCenterActivity";
+
 const DEFAULT_STATE = {
   preview: {
     senderName: "Porter Partner",
@@ -15,7 +18,7 @@ const DEFAULT_STATE = {
     campaign_name: "driver_trip_reminder",
     users: [
       {
-        id: "",
+        id: "{{UserAttribute['ID']}}",
         app: "DriverAppAndroid"
       }
     ],
@@ -44,6 +47,7 @@ const state = {
   imageUrl: "",
   imageObjectUrl: "",
   groupKey: DEFAULT_STATE.preview.sectionLabel,
+  expiry: "",
   preview: deepClone(DEFAULT_STATE.preview),
   payload: deepClone(DEFAULT_STATE.payload)
 };
@@ -87,24 +91,39 @@ function bindContentInputs() {
     renderEverything({ skipControlSync: true });
   });
 
-  document.getElementById("content-group-key").addEventListener("input", (event) => {
+  document.getElementById("content-group-key").addEventListener("change", (event) => {
     state.groupKey = event.target.value;
     state.preview.sectionLabel = getGroupKeyLabel();
     renderEverything({ skipControlSync: true });
   });
 
+  document.getElementById("content-expiry").addEventListener("change", (event) => {
+    state.expiry = event.target.value;
+    renderEverything({ skipControlSync: true });
+  });
+
+  document.getElementById("include-primary-cta").addEventListener("change", (event) => {
+    if (event.target.checked) {
+      ensurePrimaryCta();
+    } else {
+      state.payload.template.cta_buttons = [];
+      document.getElementById("include-second-cta").checked = false;
+    }
+    renderEverything({ skipControlSync: true });
+  });
+
   document.getElementById("content-cta-primary").addEventListener("input", (event) => {
-    getPrimaryCta().content = event.target.value;
+    ensurePrimaryCta().content = event.target.value;
     renderEverything({ skipControlSync: true });
   });
 
   document.getElementById("content-cta-primary-type").addEventListener("change", (event) => {
-    getPrimaryCta().button_action.button_action_type = event.target.value;
+    ensurePrimaryCta().button_action.button_action_type = event.target.value;
     renderEverything({ skipControlSync: true });
   });
 
   document.getElementById("content-cta-primary-link").addEventListener("input", (event) => {
-    getPrimaryCta().button_action.link = event.target.value;
+    ensurePrimaryCta().button_action.link = event.target.value;
     renderEverything({ skipControlSync: true });
   });
 
@@ -112,7 +131,7 @@ function bindContentInputs() {
     if (event.target.checked) {
       ensureSecondaryCta();
     } else {
-      state.payload.template.cta_buttons = [getPrimaryCta()];
+      state.payload.template.cta_buttons = getPrimaryCta() ? [getPrimaryCta()] : [];
     }
     renderEverything({ skipControlSync: true });
   });
@@ -184,26 +203,31 @@ function bindUtilityButtons() {
     try {
       await navigator.clipboard.writeText(payloadText);
       showStatus(getExportSuccessMessage("copied"));
+      showCopySuccess();
     } catch (error) {
-      showStatus("Clipboard access is blocked here. You can still download the JSON.", true);
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = payloadText;
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+        if (successful) {
+          showStatus(getExportSuccessMessage("copied") + " (using fallback)");
+          showCopySuccess();
+        } else {
+          showStatus("Clipboard access failed.", true);
+        }
+      } catch (fallbackError) {
+        showStatus("Clipboard access is blocked here.", true);
+      }
     }
   });
 
-  document.getElementById("download-json-btn").addEventListener("click", () => {
-    const exportPayload = prepareExportPayload();
-    if (!exportPayload) {
-      return;
-    }
-
-    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${exportPayload.campaign_name || "notification-payload"}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showStatus(getExportSuccessMessage("downloaded"));
-  });
 }
 
 function bindViewToggle() {
@@ -232,9 +256,10 @@ function syncControlsFromPayload() {
   document.getElementById("content-title").value = state.payload.template.title || "";
   document.getElementById("content-message").value = state.payload.template.message || "";
   document.getElementById("content-group-key").value = state.groupKey || "";
-  document.getElementById("content-cta-primary").value = getPrimaryCta().content || "";
-  document.getElementById("content-cta-primary-type").value = normalizeActionType(getPrimaryCta().button_action.button_action_type);
-  document.getElementById("content-cta-primary-link").value = getPrimaryCta().button_action.link || "";
+  document.getElementById("include-primary-cta").checked = getPrimaryCta() != null;
+  document.getElementById("content-cta-primary").value = getPrimaryCta()?.content || "";
+  document.getElementById("content-cta-primary-type").value = normalizeActionType(getPrimaryCta()?.button_action.button_action_type);
+  document.getElementById("content-cta-primary-link").value = getPrimaryCta()?.button_action.link || "";
   document.getElementById("include-second-cta").checked = getSecondaryCta() != null;
   document.getElementById("content-cta-secondary").value = getSecondaryCta()?.content || "";
   document.getElementById("content-cta-secondary-type").value = normalizeActionType(getSecondaryCta()?.button_action.button_action_type);
@@ -243,6 +268,7 @@ function syncControlsFromPayload() {
   document.getElementById("image-source-url").checked = state.imageSourceMode === "url";
   document.getElementById("image-source-file").checked = state.imageSourceMode === "file";
   document.getElementById("content-image-url").value = state.imageUrl;
+  document.getElementById("content-expiry").value = state.expiry;
 }
 
 function renderTrayPreview() {
@@ -277,6 +303,7 @@ function renderInboxPreview() {
   const groupKey = getGroupKeyLabel();
   const primaryCta = getPrimaryCta();
   const secondaryCta = getSecondaryCta();
+  const renderableCtas = [primaryCta, secondaryCta].filter((button) => Boolean((button?.content || "").trim()));
 
   setText("inbox-status-time", preview.statusBarTime);
   setText("section-tab", groupKey);
@@ -284,9 +311,9 @@ function renderInboxPreview() {
   setText("inbox-card-time", preview.inboxTime);
   setText("inbox-title-preview", title);
   setText("inbox-message-preview", message);
-  setText("inbox-cta-primary-preview", primaryCta.content);
-  setText("inbox-cta-secondary-preview", secondaryCta?.content || "");
-  renderInboxCtas(Boolean(secondaryCta?.content));
+  setText("inbox-cta-primary-preview", renderableCtas[0]?.content || "");
+  setText("inbox-cta-secondary-preview", renderableCtas[1]?.content || "");
+  renderInboxCtas(renderableCtas.length);
   renderInboxImage();
 }
 
@@ -297,6 +324,18 @@ function renderViewToggle() {
 
   document.querySelector(".device--tray").classList.toggle("is-hidden", state.viewMode !== "tray");
   document.querySelector(".device--inbox").classList.toggle("is-hidden", state.viewMode !== "inbox");
+}
+
+function showCopySuccess() {
+  const toast = document.getElementById("copy-toast");
+  if (!toast) return;
+  toast.classList.remove("is-hidden");
+  toast.classList.add("is-visible");
+  clearTimeout(showCopySuccess._timer);
+  showCopySuccess._timer = setTimeout(() => {
+    toast.classList.remove("is-visible");
+    toast.classList.add("is-hidden");
+  }, 3000);
 }
 
 function showStatus(message, isError = false) {
@@ -318,6 +357,7 @@ function setText(id, value) {
 function renderEditorState() {
   const trayOption = document.getElementById("delivery-tray-option");
   const inboxOption = document.getElementById("delivery-inbox-option");
+  const primaryFields = document.getElementById("primary-cta-fields");
   const imageField = document.getElementById("image-upload-field");
   const secondaryFields = document.getElementById("secondary-cta-fields");
   const imageUrlField = document.getElementById("image-url-field");
@@ -333,12 +373,16 @@ function renderEditorState() {
     inboxOption.classList.toggle("is-active", state.isInboxNotif);
   }
 
+  if (primaryFields) {
+    primaryFields.classList.toggle("is-hidden", getPrimaryCta() == null);
+  }
+
   if (imageField) {
     imageField.classList.toggle("is-hidden", !state.showImageInInbox);
   }
 
   if (secondaryFields) {
-    secondaryFields.classList.toggle("is-hidden", getSecondaryCta() == null);
+    secondaryFields.classList.toggle("is-hidden", getPrimaryCta() == null || getSecondaryCta() == null);
   }
 
   if (imageUrlField) {
@@ -407,45 +451,69 @@ function renderInboxImage() {
   container.classList.remove("is-empty");
 }
 
-function renderInboxCtas(hasSecondary) {
+function renderInboxCtas(ctaCount) {
   const actions = document.getElementById("inbox-cta-actions");
+  const primary = document.getElementById("inbox-cta-primary-preview");
   const secondary = document.getElementById("inbox-cta-secondary-preview");
 
-  if (!actions || !secondary) {
+  if (!actions || !primary || !secondary) {
     return;
   }
 
-  actions.classList.toggle("inbox-card__actions--single", !hasSecondary);
-  secondary.classList.toggle("is-hidden", !hasSecondary);
+  actions.classList.toggle("is-hidden", ctaCount === 0);
+  actions.classList.toggle("inbox-card__actions--single", ctaCount <= 1);
+  primary.classList.toggle("is-hidden", ctaCount === 0);
+  secondary.classList.toggle("is-hidden", ctaCount <= 1);
 }
 
 function getPrimaryCta() {
-  if (!Array.isArray(state.payload.template.cta_buttons) || state.payload.template.cta_buttons.length === 0) {
-    state.payload.template.cta_buttons = [createEmptyCta("Open App")];
-  }
-  return state.payload.template.cta_buttons[0];
+  return getCtaButtons()[0] || null;
 }
 
 function getSecondaryCta() {
-  if (!Array.isArray(state.payload.template.cta_buttons) || state.payload.template.cta_buttons.length < 2) {
-    return null;
+  return getCtaButtons()[1] || null;
+}
+
+function ensurePrimaryCta() {
+  const ctaButtons = getCtaButtons();
+
+  if (!ctaButtons[0]) {
+    ctaButtons[0] = createEmptyCta("Open App");
   }
-  return state.payload.template.cta_buttons[1];
+
+  state.payload.template.cta_buttons = ctaButtons.filter(Boolean);
+  return ctaButtons[0];
 }
 
 function ensureSecondaryCta() {
-  if (!getSecondaryCta()) {
-    state.payload.template.cta_buttons = [getPrimaryCta(), createEmptyCta("Secondary CTA")];
+  const ctaButtons = getCtaButtons();
+
+  if (!ctaButtons[0]) {
+    ctaButtons[0] = createEmptyCta("Open App");
   }
-  return state.payload.template.cta_buttons[1];
+
+  if (!ctaButtons[1]) {
+    ctaButtons[1] = createEmptyCta("Secondary CTA");
+  }
+
+  state.payload.template.cta_buttons = ctaButtons.filter(Boolean);
+  return ctaButtons[1];
+}
+
+function getCtaButtons() {
+  if (!Array.isArray(state.payload.template.cta_buttons)) {
+    state.payload.template.cta_buttons = [];
+  }
+
+  return [...state.payload.template.cta_buttons];
 }
 
 function createEmptyCta(label) {
   return {
     content: label,
     button_action: {
-      button_action_type: "deep_link",
-      link: ""
+      button_action_type: "navigation",
+      link: DEFAULT_NAVIGATION_TARGET
     }
   };
 }
@@ -478,12 +546,19 @@ function prepareExportPayload() {
 function buildExportPayload() {
   const template = shouldUseImageTemplate() ? buildImageTemplate() : buildMessageTemplate();
 
-  return {
+  const payload = {
     campaign_name: getCampaignName(),
     users: deepClone(state.payload.users),
+    category: getGroupKeyLabel(),
     is_inbox_notif: state.isInboxNotif,
     template
   };
+
+  if (state.expiry) {
+    payload.request_ttl = Math.floor(new Date(state.expiry).getTime() / 1000);
+  }
+
+  return payload;
 }
 
 function buildMessageTemplate() {
@@ -530,7 +605,12 @@ function getExportCtaButtons() {
 
 function serializeCtaButton(button) {
   const content = (button.content || "").trim();
-  const link = (button.button_action?.link || "").trim();
+  const actionType = normalizeActionType(button.button_action?.button_action_type);
+  const rawValue = (button.button_action?.link || "").trim();
+  const actionValue =
+    actionType === "navigation"
+      ? rawValue || DEFAULT_NAVIGATION_TARGET
+      : rawValue;
 
   if (!content) {
     return null;
@@ -538,10 +618,10 @@ function serializeCtaButton(button) {
 
   const serializedButton = { content };
 
-  if (link) {
+  if (actionValue) {
     serializedButton.button_action = {
-      button_action_type: normalizeActionType(button.button_action?.button_action_type),
-      link
+      button_action_type: actionType,
+      link: actionValue
     };
   }
 
@@ -588,11 +668,11 @@ function getCtaValidationError() {
     const link = (item.button.button_action?.link || "").trim();
     const actionType = normalizeActionType(item.button.button_action?.button_action_type);
 
-    if (!content || !link || actionType !== "web_link") {
+    if (!content || actionType !== "web_link") {
       continue;
     }
 
-    if (!isValidUrl(link)) {
+    if (!link || !isValidUrl(link)) {
       return `${item.label} needs a valid web link URL.`;
     }
   }
@@ -621,7 +701,15 @@ function getExportSuccessMessage(action) {
 }
 
 function normalizeActionType(actionType) {
-  return actionType === "web_link" || actionType === "url" ? "web_link" : "deep_link";
+  if (actionType === "web_link" || actionType === "url") {
+    return "web_link";
+  }
+
+  if (actionType === "deep_link") {
+    return "deep_link";
+  }
+
+  return "navigation";
 }
 
 function isValidUrl(value) {

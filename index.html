@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
+    <div id="copy-toast" class="copy-toast is-hidden" role="status" aria-live="polite">
+      <span class="copy-toast__icon">&#10003;</span>
+      Raw copied — paste in MoEngage and select Raw
+    </div>
     <div class="app-shell">
       <header class="hero">
         <div class="hero__copy">
@@ -16,9 +20,8 @@
             The payload structure stays fixed in the background so you can focus on content while keeping the same Android tray and MoEngage inbox look.
           </p>
         </div>
-        <div class="hero__actions">
-          <button class="button button--ghost" id="copy-json-btn" type="button">Copy JSON</button>
-          <button class="button" id="download-json-btn" type="button">Download Payload</button>
+        <div class="hero__brand">
+          <img src="./assets/porter-logo.webp" alt="Porter" class="hero__logo">
         </div>
       </header>
 
@@ -52,33 +55,58 @@
                   <input id="content-campaign-name" type="text" minlength="5" placeholder="driver_trip_reminder">
                 </label>
                 <label class="field field--full">
-                  <span>Title</span>
-                  <input id="content-title" type="text">
+                  <span>Title <span class="field__required" aria-hidden="true">*</span></span>
+                  <input id="content-title" type="text" required>
                 </label>
                 <label class="field field--full">
-                  <span>Message</span>
-                  <textarea id="content-message" rows="7"></textarea>
+                  <span>Message <span class="field__required" aria-hidden="true">*</span></span>
+                  <textarea id="content-message" rows="7" required></textarea>
                 </label>
                 <label class="field field--full">
                   <span>Group Key</span>
-                  <input id="content-group-key" type="text" placeholder="General">
+                  <select id="content-group-key">
+                    <option value="General">General</option>
+                    <option value="Payments">Payments</option>
+                    <option value="Onboarding">Onboarding</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Warning">Warning</option>
+                    <option value="Suspension">Suspension</option>
+                    <option value="Earnings">Earnings</option>
+                    <option value="Rewards">Rewards</option>
+                    <option value="Incentives">Incentives</option>
+                    <option value="Branding">Branding</option>
+                    <option value="Subscription">Subscription</option>
+                    <option value="Orders">Orders</option>
+                    <option value="Promotional">Promotional</option>
+                    <option value="Goodwill">Goodwill</option>
+                  </select>
                 </label>
                 <label class="field field--full">
-                  <span>Primary CTA</span>
-                  <input id="content-cta-primary" type="text">
+                  <span>Expiry</span>
+                  <input id="content-expiry" type="datetime-local">
                 </label>
-                <div class="field-grid">
-                  <label class="field">
-                    <span>Primary Action</span>
-                    <select id="content-cta-primary-type">
-                      <option value="deep_link">Deep Link</option>
-                      <option value="web_link">Web Link</option>
-                    </select>
+                <label class="field field--checkbox field--full">
+                  <input id="include-primary-cta" type="checkbox">
+                  <span>Add primary CTA</span>
+                </label>
+                <div class="field-grid is-hidden" id="primary-cta-fields">
+                  <label class="field field--full">
+                    <span>Primary CTA</span>
+                    <input id="content-cta-primary" type="text">
                   </label>
-                  <label class="field">
-                    <span>Primary Link</span>
-                    <input id="content-cta-primary-link" type="text">
-                  </label>
+                  <div class="field-grid">
+                    <label class="field">
+                      <span>Primary Action</span>
+                      <select id="content-cta-primary-type">
+                        <option value="deep_link">Deep Link</option>
+                        <option value="web_link">Web Link</option>
+                      </select>
+                    </label>
+                    <label class="field">
+                      <span>Primary Link</span>
+                      <input id="content-cta-primary-link" type="text">
+                    </label>
+                  </div>
                 </div>
                 <label class="field field--checkbox field--full">
                   <input id="include-second-cta" type="checkbox">
@@ -129,6 +157,14 @@
             </div>
 
             <p class="visually-hidden" id="payload-status" role="status" aria-live="polite"></p>
+
+            <div class="form-actions">
+              <button class="button button--full" id="copy-json-btn" type="button">Copy Raw</button>
+              <p class="form-actions__hint">Click <strong>Copy Raw</strong> and paste in the <strong>Raw</strong> section of MoEngage Connector Campaign Screen. Reference screenshot is shown below.</p>
+              <figure class="form-actions__reference">
+                <img src="./assets/moengage-paste-reference.jpg" alt="MoEngage dashboard showing Body type options — select Raw and paste the JSON" class="form-actions__reference-img">
+              </figure>
+            </div>
           </form>
         </section>
 
