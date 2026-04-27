@@ -33,7 +33,7 @@ const DEFAULT_STATE = {
 
 const state = {
   viewMode: "tray",
-  isInboxNotif: false,
+  isInboxNotif: null,
   showImageInInbox: false,
   imageSourceMode: "url",
   imageUrl: "",
@@ -242,8 +242,8 @@ function renderEverything(options = {}) {
 }
 
 function syncControlsFromPayload() {
-  document.getElementById("delivery-tray").checked = !state.isInboxNotif;
-  document.getElementById("delivery-inbox").checked = state.isInboxNotif;
+  document.getElementById("delivery-tray").checked = state.isInboxNotif === false;
+  document.getElementById("delivery-inbox").checked = state.isInboxNotif === true;
   document.getElementById("content-campaign-name").value = state.payload.campaign_name || "";
   document.getElementById("content-title").value = state.payload.template.title || "";
   document.getElementById("content-message").value = state.payload.template.message || "";
@@ -358,11 +358,11 @@ function renderEditorState() {
   const fileOption = document.getElementById("image-source-file-option");
 
   if (trayOption) {
-    trayOption.classList.toggle("is-active", !state.isInboxNotif);
+    trayOption.classList.toggle("is-active", state.isInboxNotif === false);
   }
 
   if (inboxOption) {
-    inboxOption.classList.toggle("is-active", state.isInboxNotif);
+    inboxOption.classList.toggle("is-active", state.isInboxNotif === true);
   }
 
   if (primaryFields) {
@@ -621,6 +621,10 @@ function serializeCtaButton(button) {
 }
 
 function getExportValidationError() {
+  if (state.isInboxNotif === null) {
+    return "Please select a delivery target.";
+  }
+
   if (getCampaignName().length < 5) {
     return "Campaign name must be at least 5 characters.";
   }
