@@ -321,8 +321,9 @@ body::before {
   font-size: 0.9375rem;
 }
 
-.field__required {
-  color: #f87171;
+.field__required,
+.field span .field__required {
+  color: #e53e3e !important;
   margin-left: 4px;
   font-size: 0.75rem;
   font-weight: 600;
