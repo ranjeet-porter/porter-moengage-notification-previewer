@@ -306,12 +306,38 @@ body::before {
   padding-top: 8px;
 }
 
-.form-actions__hint {
+.form-actions__warning {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-left: 4px solid #f59e0b;
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #78350f;
+}
+
+.form-actions__warning-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  color: #d97706;
+  margin-top: 1px;
+}
+
+.form-actions__warning p {
   margin: 0;
   font-size: 0.8125rem;
-  color: #2458f4;
   line-height: 1.6;
-  font-weight: 500;
+}
+
+.form-actions__warning p + p {
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.form-actions__warning strong {
+  color: #92400e;
 }
 
 .button--full {
