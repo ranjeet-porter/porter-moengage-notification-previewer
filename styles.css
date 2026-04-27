@@ -323,7 +323,11 @@ body::before {
 
 .field__required {
   color: #f87171;
-  margin-left: 2px;
+  margin-left: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .copy-toast {
