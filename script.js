@@ -15,7 +15,7 @@ const DEFAULT_STATE = {
     unread: true
   },
   payload: {
-    campaign_name: "driver_trip_reminder",
+    campaign_name: "",
     users: [
       {
         id: "{{UserAttribute['ID']}}",
@@ -24,17 +24,9 @@ const DEFAULT_STATE = {
     ],
     template: {
       template_type: "message",
-      title: "Maximize Your Earnings Today",
-      message: "Complete more trips with Porter and boost your daily income. Check your trip opportunities now.",
-      cta_buttons: [
-        {
-          content: "Open App",
-          button_action: {
-            button_action_type: "deep_link",
-            link: "porter://trips"
-          }
-        }
-      ]
+      title: "",
+      message: "",
+      cta_buttons: []
     }
   }
 };
