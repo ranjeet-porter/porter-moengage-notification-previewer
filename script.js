@@ -648,7 +648,7 @@ function getExportValidationError() {
     return "Please select a group key category.";
   }
 
-  if (getCampaignName().length < 5) {
+  if ((state.payload.campaign_name || "").trim().length < 5) {
     return "Campaign name must be at least 5 characters.";
   }
 
@@ -701,7 +701,8 @@ function getCtaValidationError() {
 
 function getCampaignName() {
   const campaignName = (state.payload.campaign_name || "").trim();
-  return campaignName || DEFAULT_STATE.payload.campaign_name;
+  if (!campaignName) return "";
+  return `${campaignName} - {{UserAttribute['Campaign Name']}}`;
 }
 
 function shouldUseImageTemplate() {
