@@ -34,10 +34,6 @@ const DEFAULT_STATE = {
 const state = {
   viewMode: "tray",
   isInboxNotif: null,
-  showImageInInbox: false,
-  imageSourceMode: "url",
-  imageUrl: "",
-  imageObjectUrl: "",
   groupKey: "",
   expiry: "",
   preview: deepClone(DEFAULT_STATE.preview),
@@ -143,44 +139,6 @@ function bindContentInputs() {
     renderEverything({ skipControlSync: true });
   });
 
-  document.getElementById("include-image").addEventListener("change", (event) => {
-    state.showImageInInbox = event.target.checked;
-    renderEverything({ skipControlSync: true });
-  });
-
-  document.querySelectorAll('input[name="image-source-mode"]').forEach((input) => {
-    input.addEventListener("change", (event) => {
-      state.imageSourceMode = event.target.value;
-      renderEverything({ skipControlSync: true });
-    });
-  });
-
-  document.getElementById("content-image-url").addEventListener("input", (event) => {
-    state.imageUrl = event.target.value.trim();
-    if (state.imageUrl) {
-      showStatus("Image URL added. Export will use the image template when the URL is valid.");
-    }
-    renderEverything({ skipControlSync: true });
-  });
-
-  document.getElementById("content-image").addEventListener("change", (event) => {
-    const [file] = event.target.files || [];
-
-    if (state.imageObjectUrl) {
-      URL.revokeObjectURL(state.imageObjectUrl);
-      state.imageObjectUrl = "";
-    }
-
-    if (!file) {
-      showStatus("Image cleared from preview.");
-      renderEverything({ skipControlSync: true });
-      return;
-    }
-
-    state.imageObjectUrl = URL.createObjectURL(file);
-    showStatus("Image attached for preview only. Use Image URL to export an image template.");
-    renderEverything({ skipControlSync: true });
-  });
 }
 
 function bindUtilityButtons() {
@@ -261,10 +219,6 @@ function syncControlsFromPayload() {
   document.getElementById("content-cta-secondary").value = getSecondaryCta()?.content || "";
   document.getElementById("content-cta-secondary-type").value = normalizeActionType(getSecondaryCta()?.button_action.button_action_type);
   document.getElementById("content-cta-secondary-link").value = getSecondaryCta()?.button_action.link || "";
-  document.getElementById("include-image").checked = state.showImageInInbox;
-  document.getElementById("image-source-url").checked = state.imageSourceMode === "url";
-  document.getElementById("image-source-file").checked = state.imageSourceMode === "file";
-  document.getElementById("content-image-url").value = state.imageUrl;
   document.getElementById("content-expiry").value = state.expiry;
 }
 
@@ -311,7 +265,6 @@ function renderInboxPreview() {
   setText("inbox-cta-primary-preview", renderableCtas[0]?.content || "");
   setText("inbox-cta-secondary-preview", renderableCtas[1]?.content || "");
   renderInboxCtas(renderableCtas.length);
-  renderInboxImage();
 }
 
 function renderViewToggle() {
@@ -369,12 +322,7 @@ function renderEditorState() {
   const trayOption = document.getElementById("delivery-tray-option");
   const inboxOption = document.getElementById("delivery-inbox-option");
   const primaryFields = document.getElementById("primary-cta-fields");
-  const imageField = document.getElementById("image-upload-field");
   const secondaryFields = document.getElementById("secondary-cta-fields");
-  const imageUrlField = document.getElementById("image-url-field");
-  const imageFileField = document.getElementById("image-file-field");
-  const urlOption = document.getElementById("image-source-url-option");
-  const fileOption = document.getElementById("image-source-file-option");
 
   if (trayOption) {
     trayOption.classList.toggle("is-active", state.isInboxNotif === false);
@@ -388,79 +336,11 @@ function renderEditorState() {
     primaryFields.classList.toggle("is-hidden", getPrimaryCta() == null);
   }
 
-  if (imageField) {
-    imageField.classList.toggle("is-hidden", !state.showImageInInbox);
-  }
-
   if (secondaryFields) {
     secondaryFields.classList.toggle("is-hidden", getPrimaryCta() == null || getSecondaryCta() == null);
   }
-
-  if (imageUrlField) {
-    imageUrlField.classList.toggle("is-hidden", state.imageSourceMode !== "url");
-  }
-
-  if (imageFileField) {
-    imageFileField.classList.toggle("is-hidden", state.imageSourceMode !== "file");
-  }
-
-  if (urlOption) {
-    urlOption.classList.toggle("is-active", state.imageSourceMode === "url");
-  }
-
-  if (fileOption) {
-    fileOption.classList.toggle("is-active", state.imageSourceMode === "file");
-  }
 }
 
-function renderInboxImage() {
-  const image = document.getElementById("inbox-image-preview");
-  const emptyState = document.getElementById("inbox-image-empty");
-  const container = document.getElementById("inbox-card-media");
-  const imageSource = state.imageSourceMode === "file" ? state.imageObjectUrl : state.imageUrl;
-
-  if (!image || !emptyState || !container) {
-    return;
-  }
-
-  if (!state.showImageInInbox) {
-    container.classList.add("is-hidden");
-    return;
-  }
-
-  container.classList.remove("is-hidden");
-
-  if (!imageSource) {
-    image.removeAttribute("src");
-    image.style.display = "none";
-    emptyState.style.display = "grid";
-    emptyState.textContent =
-      state.imageSourceMode === "file"
-        ? "Attach an image to preview a promotional inbox card."
-        : "Add an image URL to preview a promotional inbox card.";
-    container.classList.add("is-empty");
-    return;
-  }
-
-  image.onload = () => {
-    image.style.display = "block";
-    emptyState.style.display = "none";
-    container.classList.remove("is-empty");
-  };
-
-  image.onerror = () => {
-    image.style.display = "none";
-    emptyState.style.display = "grid";
-    emptyState.textContent = "This image could not be loaded. Check the file or image URL and try again.";
-    container.classList.add("is-empty");
-  };
-
-  image.src = imageSource;
-  image.style.display = "none";
-  emptyState.style.display = "grid";
-  emptyState.textContent = "Loading image preview...";
-  container.classList.remove("is-empty");
-}
 
 function renderInboxCtas(ctaCount) {
   const actions = document.getElementById("inbox-cta-actions");
@@ -555,7 +435,7 @@ function prepareExportPayload() {
 }
 
 function buildExportPayload() {
-  const template = shouldUseImageTemplate() ? buildImageTemplate() : buildMessageTemplate();
+  const template = buildMessageTemplate();
 
   const payload = {
     campaign_name: getCampaignName(),
@@ -587,25 +467,6 @@ function buildMessageTemplate() {
   return template;
 }
 
-function buildImageTemplate() {
-  const template = {
-    template_type: "image",
-    title: state.payload.template.title.trim(),
-    asset_link: state.imageUrl.trim()
-  };
-  const message = state.payload.template.message.trim();
-  const ctaButtons = getExportCtaButtons();
-
-  if (message) {
-    template.message = message;
-  }
-
-  if (ctaButtons.length) {
-    template.cta_buttons = ctaButtons;
-  }
-
-  return template;
-}
 
 function getExportCtaButtons() {
   return [getPrimaryCta(), getSecondaryCta()]
@@ -660,10 +521,6 @@ function getExportValidationError() {
     return "Message is required for a message template.";
   }
 
-  if (state.showImageInInbox && state.imageSourceMode === "url" && state.imageUrl && !isValidUrl(state.imageUrl)) {
-    return "Use a valid image URL to export an image template.";
-  }
-
   const ctaError = getCtaValidationError();
   if (ctaError) {
     return ctaError;
@@ -709,19 +566,8 @@ function getCampaignName() {
   return `${base}-${datePart}-${timePart}`;
 }
 
-function shouldUseImageTemplate() {
-  return state.showImageInInbox && state.imageSourceMode === "url" && isValidUrl(state.imageUrl);
-}
-
 function getExportSuccessMessage(action) {
-  const baseMessage =
-    action === "copied" ? "Final JSON copied to clipboard." : "Final JSON download started.";
-
-  if (state.showImageInInbox && state.imageSourceMode === "file") {
-    return `${baseMessage} Attached image stayed preview-only, so export used the message template.`;
-  }
-
-  return baseMessage;
+  return action === "copied" ? "Final JSON copied to clipboard." : "Final JSON download started.";
 }
 
 function normalizeActionType(actionType) {
