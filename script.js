@@ -648,8 +648,8 @@ function getExportValidationError() {
     return "Please select a group key category.";
   }
 
-  if ((state.payload.campaign_name || "").trim().length < 5) {
-    return "Campaign name must be at least 5 characters.";
+  if (!getCampaignName()) {
+    return "Campaign name is required.";
   }
 
   if (!state.payload.template.title.trim()) {
@@ -700,9 +700,13 @@ function getCtaValidationError() {
 }
 
 function getCampaignName() {
-  const campaignName = (state.payload.campaign_name || "").trim();
-  if (!campaignName) return "";
-  return `${campaignName} - {{UserAttribute['Campaign Name']}}`;
+  const base = (state.payload.campaign_name || "").trim();
+  if (!base) return "";
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `${base}-${datePart}-${timePart}`;
 }
 
 function shouldUseImageTemplate() {
