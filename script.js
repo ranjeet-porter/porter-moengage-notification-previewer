@@ -147,9 +147,17 @@ function bindContentInputs() {
     renderEverything({ skipControlSync: true });
   });
 
+  document.getElementById("content-image-url").addEventListener("input", (event) => {
+    state.imageUrl = event.target.value.trim();
+    renderEverything({ skipControlSync: true });
+  });
+
   document.getElementById("content-image-drive").addEventListener("input", (event) => {
     const raw = event.target.value.trim();
-    state.imageUrl = raw ? driveToDirectUrl(raw) : "";
+    if (!raw) return;
+    const converted = driveToDirectUrl(raw);
+    state.imageUrl = converted;
+    document.getElementById("content-image-url").value = converted;
     renderEverything({ skipControlSync: true });
   });
 
@@ -234,6 +242,7 @@ function syncControlsFromPayload() {
   document.getElementById("content-cta-secondary-type").value = normalizeActionType(getSecondaryCta()?.button_action.button_action_type);
   document.getElementById("content-cta-secondary-link").value = getSecondaryCta()?.button_action.link || "";
   document.getElementById("include-image").checked = state.showImageInInbox;
+  document.getElementById("content-image-url").value = state.imageUrl;
   document.getElementById("content-expiry").value = state.expiry;
 }
 
