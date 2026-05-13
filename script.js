@@ -1,8 +1,6 @@
 const DEFAULT_NAVIGATION_TARGET =
   "com.theporter.android.driverapp.ui.notification_center.SelfHandledNotificationCenterActivity";
 
-// Register a free Client ID at https://api.imgur.com/oauth2/addclient
-const IMGUR_CLIENT_ID = "YOUR_IMGUR_CLIENT_ID";
 
 const DEFAULT_STATE = {
   preview: {
@@ -39,7 +37,6 @@ const state = {
   isInboxNotif: null,
   showImageInInbox: false,
   imageUrl: "",
-  imageUploading: false,
   groupKey: "",
   expiry: "",
   preview: deepClone(DEFAULT_STATE.preview),
@@ -150,28 +147,10 @@ function bindContentInputs() {
     renderEverything({ skipControlSync: true });
   });
 
-  document.getElementById("content-image").addEventListener("change", async (event) => {
-    const [file] = event.target.files || [];
-    if (!file) {
-      state.imageUrl = "";
-      state.imageUploading = false;
-      renderEverything({ skipControlSync: true });
-      return;
-    }
-
-    state.imageUploading = true;
-    state.imageUrl = "";
+  document.getElementById("content-image-drive").addEventListener("input", (event) => {
+    const raw = event.target.value.trim();
+    state.imageUrl = raw ? driveToDirectUrl(raw) : "";
     renderEverything({ skipControlSync: true });
-
-    try {
-      state.imageUrl = await uploadToImgur(file);
-    } catch {
-      showStatus("Image upload failed. Check your Imgur Client ID or try again.", true);
-      event.target.value = "";
-    } finally {
-      state.imageUploading = false;
-      renderEverything({ skipControlSync: true });
-    }
   });
 
 }
@@ -397,14 +376,6 @@ function renderInboxImage() {
 
   container.classList.remove("is-hidden");
 
-  if (state.imageUploading) {
-    image.style.display = "none";
-    emptyState.style.display = "grid";
-    emptyState.textContent = "Uploading image...";
-    container.classList.add("is-empty");
-    return;
-  }
-
   if (!state.imageUrl) {
     image.removeAttribute("src");
     image.style.display = "none";
@@ -610,10 +581,6 @@ function getExportValidationError() {
     return "Title is required.";
   }
 
-  if (state.imageUploading) {
-    return "Please wait for the image to finish uploading.";
-  }
-
   if (!shouldUseImageTemplate() && !state.payload.template.message.trim()) {
     return "Message is required for a message template.";
   }
@@ -682,20 +649,18 @@ function buildImageTemplate() {
   return template;
 }
 
-async function uploadToImgur(file) {
-  const formData = new FormData();
-  formData.append("image", file);
+function driveToDirectUrl(input) {
+  let fileId = null;
 
-  const response = await fetch("https://api.imgur.com/3/image", {
-    method: "POST",
-    headers: { Authorization: `Client-ID ${IMGUR_CLIENT_ID}` },
-    body: formData
-  });
+  const matchPath = input.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchPath) {
+    fileId = matchPath[1];
+  } else {
+    const matchParam = input.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (matchParam) fileId = matchParam[1];
+  }
 
-  if (!response.ok) throw new Error("Imgur upload failed");
-
-  const data = await response.json();
-  return data.data.link;
+  return fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : input;
 }
 
 function getExportSuccessMessage(action) {
